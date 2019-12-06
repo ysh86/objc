@@ -4,6 +4,7 @@ package objc
 
 /*
 #cgo LDFLAGS: -framework Cocoa
+#define OBJC_OLD_DISPATCH_PROTOTYPES 1
 #include <objc/objc-class.h>
 #include <stdlib.h> // for free()
 
