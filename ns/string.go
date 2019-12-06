@@ -1,51 +1,55 @@
 package ns
 
 import (
-	"private/objc"
-	"unsafe"
+	"github.com/ysh86/objc"
 )
 
-type metaString struct {
-	metaObject
-}
 type classString struct {
-	metaString
-	classObject
-	// opaque
+	classObject // super & isa member/class object
+}
+
+// InstanceString corresponds to an instance of NSString class.
+type InstanceString struct {
+	classString
+	// isa: classString.id
+	// opaque members
 	// ...
 }
 
-type hiddenString struct {
-	metaString
+type cachedClassString struct {
+	classString // class methods
+	// class object: classString.id
 
-	id    objc.ID
-	alloc objc.SEL
-
-	init objc.SEL
+	// class methods
+	// ...
+	// instance methods
+	// ...
 }
 
-// String is a dummy instance of the meta class of NSString.
-// It is used for class methods.
-var String *hiddenString
+// String is a dummy(cached) object of the NSString class.
+// It is used for class methods & selector cache.
+var String *cachedClassString
 
 func init() {
-	String = &hiddenString{
-		id:    objc.LookUpClass("NSString"),
-		alloc: objc.SelRegisterName("alloc"),
-		init:  objc.SelRegisterName("init"),
+	String = &cachedClassString{classString: classString{classObject: classObject{
+		id: objc.LookUpClass("NSString"),
+	}},
+	// methods...
 	}
 }
 
-func (c *metaString) Alloc() *classString {
-	id := objc.MsgSend(String.id, String.alloc)
-	return (*classString)(unsafe.Pointer(id))
+// Alloc just casts the result from the super.
+func (c *classString) Alloc() *InstanceString {
+	obj := c.classObject.Alloc()
+	return (*InstanceString)(objc.ID(obj))
 }
 
-func (o *classString) Init() *classString {
+// Init just casts the result from the super.
+func (o *classString) Init() *InstanceString {
 	if o == nil {
-		return o
+		return nil
 	}
 
-	id := objc.MsgSend(objc.ID(unsafe.Pointer(o)), String.init)
-	return (*classString)(unsafe.Pointer(id))
+	obj := o.classObject.Init()
+	return (*InstanceString)(objc.ID(obj))
 }

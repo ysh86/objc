@@ -20,14 +20,19 @@ import (
 )
 
 type Class C.Class
-type ID C.id
+type ID unsafe.Pointer // = C.id
 type SEL C.SEL
 
 func LookUpClass(name string) ID {
 	n := C.CString(name)
 	defer C.free(unsafe.Pointer(n))
 
-	return ID(unsafe.Pointer(C.objc_lookUpClass(n)))
+	return ID(C.objc_lookUpClass(n))
+}
+
+func ClassGetName(cls Class) string {
+	nameC := C.class_getName(cls)
+	return C.GoString(nameC)
 }
 
 func SelRegisterName(str string) SEL {
