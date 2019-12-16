@@ -1,24 +1,25 @@
 package ns
 
 import (
+	"unsafe"
+
 	"github.com/ysh86/objc"
 )
 
 type classObject struct {
-	id objc.ID // isa member/class object
 }
 
 // InstanceObject corresponds to an instance of NSObject class.
 type InstanceObject struct {
-	classObject
-	// isa: classObject.id
+	classObject // class methods
+	isa         objc.ID
 	// opaque members
 	// ...
 }
 
 type cachedClassObject struct {
-	classObject // class methods
-	// class object: classObject.id
+	classObject         // class methods
+	cls         objc.ID // class object
 
 	// class methods
 	alloc objc.SEL
@@ -33,9 +34,8 @@ type cachedClassObject struct {
 var Object *cachedClassObject
 
 func init() {
-	Object = &cachedClassObject{classObject: classObject{
-		id: objc.LookUpClass("NSObject"),
-	},
+	Object = &cachedClassObject{
+		cls:     objc.LookUpClass("NSObject"),
 		alloc:   objc.SelRegisterName("alloc"),
 		class:   objc.SelRegisterName("class"),
 		init:    objc.SelRegisterName("init"),
@@ -44,11 +44,12 @@ func init() {
 }
 
 func (c *classObject) Alloc() *InstanceObject {
-	id := objc.MsgSend(c.id, Object.alloc)
+	cls := ((*cachedClassObject)(unsafe.Pointer(c))).cls
+	id := objc.MsgSend(cls, Object.alloc)
 	return (*InstanceObject)(id)
 }
 
-func (o *classObject) Class() objc.Class {
+func (o *InstanceObject) Class() objc.Class {
 	if o == nil {
 		return nil
 	}
@@ -57,7 +58,7 @@ func (o *classObject) Class() objc.Class {
 	return objc.Class(id)
 }
 
-func (o *classObject) Init() *InstanceObject {
+func (o *InstanceObject) Init() *InstanceObject {
 	if o == nil {
 		return nil
 	}
@@ -66,7 +67,7 @@ func (o *classObject) Init() *InstanceObject {
 	return (*InstanceObject)(id)
 }
 
-func (o *classObject) Release() {
+func (o *InstanceObject) Release() {
 	if o != nil {
 		objc.MsgSend(objc.ID(o), Object.release)
 	}

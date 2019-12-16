@@ -5,20 +5,20 @@ import (
 )
 
 type classString struct {
-	classObject // super & isa member/class object
+	classObject // super
 }
 
 // InstanceString corresponds to an instance of NSString class.
 type InstanceString struct {
-	classString
-	// isa: classString.id
+	classString    // class methods
+	InstanceObject // super & isa member
 	// opaque members
 	// ...
 }
 
 type cachedClassString struct {
-	classString // class methods
-	// class object: classString.id
+	classString         // class methods
+	cls         objc.ID // class object
 
 	// class methods
 	// ...
@@ -31,10 +31,9 @@ type cachedClassString struct {
 var String *cachedClassString
 
 func init() {
-	String = &cachedClassString{classString: classString{classObject: classObject{
-		id: objc.LookUpClass("NSString"),
-	}},
-	// methods...
+	String = &cachedClassString{
+		cls: objc.LookUpClass("NSString"),
+		// methods...
 	}
 }
 
@@ -45,11 +44,11 @@ func (c *classString) Alloc() *InstanceString {
 }
 
 // Init just casts the result from the super.
-func (o *classString) Init() *InstanceString {
+func (o *InstanceString) Init() *InstanceString {
 	if o == nil {
 		return nil
 	}
 
-	obj := o.classObject.Init()
+	obj := o.InstanceObject.Init()
 	return (*InstanceString)(objc.ID(obj))
 }

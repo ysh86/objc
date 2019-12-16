@@ -13,20 +13,17 @@ func main() {
 	fmt.Printf("NSObject [%s class]: %p, %#v\n", objc.ClassGetName(objc.Class(co)), co, (*ns.InstanceObject)(co))
 	fmt.Printf("NSString [%s class]: %p, %#v\n", objc.ClassGetName(objc.Class(cs)), cs, (*ns.InstanceString)(cs))
 
-	oo := ns.Object.Alloc()
-	ioo := (*ns.InstanceObject)(oo)
+	ioo := ns.Object.Alloc()
 	coo := ioo.Class()
 	fmt.Printf("NSObject [%s alloc]: %p, %#v\n", objc.ClassGetName(coo), ioo, ioo)
 
 	ioo.Release()
 	ioo = nil
 
-	ooo := ns.String.Alloc()
-	iss := (*ns.InstanceString)(ooo)
+	iss := ns.String.Alloc()
 	css := iss.Class()
 	fmt.Printf("NSString  [%s alloc]: %p, %#v\n", objc.ClassGetName(css), iss, iss)
-	oooo := iss.Init()
-	iss = (*ns.InstanceString)(objc.ID(oooo))
+	iss = iss.Init()
 	css = iss.Class()
 	fmt.Printf("NSString [%s alloc] init]: %p, %#v\n", objc.ClassGetName(css), iss, iss)
 
